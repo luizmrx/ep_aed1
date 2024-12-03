@@ -5,6 +5,7 @@
 #include <time.h>
 #include <unac.h>
 #include <utf8proc.h>
+
 #define TAMANHO 10000
 
 // Estrutura para armazenar palavras e suas ocorrências na árvore AVL
@@ -12,8 +13,10 @@ typedef struct NoAVL {
     char *palavra;
     int contagem;
     int *linhas;
-    char **linhas_texto; // Armazenar as linhas inteiras
+    char **linhas_texto; // Linhas inteiras
+    char **palavras_linha; // Armazenar todas as palavras da linha
     int quantidade_linhas;
+    int quantidade_palavras_linha;
     int altura; // Altura do nó
     struct NoAVL *esquerda, *direita;
 } NoAVL;
@@ -90,31 +93,33 @@ NoAVL* balancear(NoAVL *no) {
 }
 
 // Função para criar um novo nó
-NoAVL* criar_no_avl(char *palavra, int numero_linha, char *linha_texto) {
+NoAVL* criar_no_avl(char *palavra, int numero_linha, char *linha_texto, char **palavras_linha, int quantidade_palavras_linha) {
     NoAVL *novo_no = (NoAVL *)malloc(sizeof(NoAVL));
     novo_no->palavra = strdup(palavra);
     novo_no->contagem = 1;
     novo_no->quantidade_linhas = 1;
+    novo_no->quantidade_palavras_linha = quantidade_palavras_linha;
     novo_no->linhas = (int *)malloc(sizeof(int));
     novo_no->linhas_texto = (char **)malloc(sizeof(char *));
+    novo_no->palavras_linha = palavras_linha;  // Armazenar todas as palavras da linha
     novo_no->linhas[0] = numero_linha;
-    novo_no->linhas_texto[0] = strdup(linha_texto);
+    novo_no->linhas_texto[0] = strdup(linha_texto); // Armazenar a linha original
     novo_no->esquerda = novo_no->direita = NULL;
     novo_no->altura = 1;
     return novo_no;
 }
 
 // Função para inserir uma palavra na árvore AVL
-NoAVL* inserir_avl(NoAVL *no, char *palavra, int numero_linha, char *linha_texto) {
+NoAVL* inserir_avl(NoAVL *no, char *palavra, int numero_linha, char *linha_texto, char **palavras_linha, int quantidade_palavras_linha) {
     // 1. Realizar a inserção normal em uma árvore binária de busca
     if (no == NULL) {
-        return criar_no_avl(palavra, numero_linha, linha_texto);
+        return criar_no_avl(palavra, numero_linha, linha_texto, palavras_linha, quantidade_palavras_linha);
     }
 
     if (strcmp(palavra, no->palavra) < 0) {
-        no->esquerda = inserir_avl(no->esquerda, palavra, numero_linha, linha_texto);
+        no->esquerda = inserir_avl(no->esquerda, palavra, numero_linha, linha_texto, palavras_linha, quantidade_palavras_linha);
     } else if (strcmp(palavra, no->palavra) > 0) {
-        no->direita = inserir_avl(no->direita, palavra, numero_linha, linha_texto);
+        no->direita = inserir_avl(no->direita, palavra, numero_linha, linha_texto, palavras_linha, quantidade_palavras_linha);
     } else {
         // Se a palavra já existe, aumentar o contador e adicionar a linha
         no->contagem++;
@@ -169,18 +174,46 @@ void preprocessar_texto(char *texto) {
     
     if (resultado == 0) {
         // Substituir o texto original pela versão sem acento
-        strcpy(texto, texto_sem_acento);
-        free(texto_sem_acento);  // Liberar memória alocada
-    } else {
-        printf("Erro ao remover acentos.\n");
+        strncpy(texto, texto_sem_acento, comprimento_saida);
+        texto[comprimento_saida] = '\0';
     }
+    
+    free(texto_sem_acento);
+}
+
+// Função para processar cada linha do texto e inseri-la na árvore AVL
+void preprocessar_texto_e_inserir(char *linha, int numero_linha, NoAVL **arvore_avl) {
+    char *palavra;
+    int quantidade_palavras_linha = 0;
+    char *palavras_linha = (char *)malloc(sizeof(char *) * TAMANHO);
+    char *linha_texto = strdup(linha);
+
+    // Tokenização da linha em palavras
+    palavra = strtok(linha, " \n");
+    while (palavra != NULL) {
+        palavras_linha[quantidade_palavras_linha] = strdup(palavra);
+        quantidade_palavras_linha++;
+        palavra = strtok(NULL, " \n");
+    }
+
+    // Inserir cada palavra na árvore AVL
+    for (int i = 0; i < quantidade_palavras_linha; i++) {
+        // Preprocessar palavra para inserção
+        preprocessar_texto(palavras_linha[i]);
+        *arvore_avl = inserir_avl(*arvore_avl, palavras_linha[i], numero_linha, linha_texto, palavras_linha, quantidade_palavras_linha);
+    }
+
+    // Liberar memória alocada para palavras
+    for (int i = 0; i < quantidade_palavras_linha; i++) {
+        free(palavras_linha[i]);
+    }
+    free(palavras_linha);
 }
 
 // Função principal
 int main(int argc, char *argv[]) {
     FILE *entrada;
     char *linha;
-    char *copia_ponteiro_linha;
     int numero_linha = 0;
     int tamanho_maximo_linha = TAMANHO;
     clock_t inicio, fim;
@@ -206,16 +239,7 @@ int main(int argc, char *argv[]) {
 
     while (fgets(linha, tamanho_maximo_linha, entrada)) {
         numero_linha++;
-        copia_ponteiro_linha = strdup(linha);
-        preprocessar_texto(copia_ponteiro_linha);
-
-        char *palavra = strtok(copia_ponteiro_linha, " ");
-        while (palavra != NULL) {
-            arvore_avl = inserir_avl(arvore_avl, palavra, numero_linha, linha);
-            palavra = strtok(NULL, " ");
-        }
-
-        free(copia_ponteiro_linha);
+        preprocessar_texto_e_inserir(linha, numero_linha, &arvore_avl);
     }
 
     // Fim do tempo de carga
