@@ -185,7 +185,7 @@ void preprocessar_texto(char *texto) {
 void preprocessar_texto_e_inserir(char *linha, int numero_linha, NoAVL **arvore_avl) {
     char *palavra;
     int quantidade_palavras_linha = 0;
-    char *palavras_linha = (char *)malloc(sizeof(char *) * TAMANHO);
+    char **palavras_linha = (char **)malloc(sizeof(char *) * TAMANHO);
     char *linha_texto = strdup(linha);
 
     // Tokenização da linha em palavras
