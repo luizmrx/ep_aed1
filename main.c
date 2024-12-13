@@ -29,45 +29,32 @@ int buscar_array(PalavraArray *array, int tamanho, char *palavra) {
     return -1; // Palavra não encontrada
 }
 
-void inserir_array(char **palavras, int numero_linha, char *linha_texto) {
-    for (int i = 0; palavras[i] != NULL; i++) {  // Itera sobre cada palavra no array de palavras
-        int idx = buscar_array(array_palavras, tamanho_array, palavras[i]);
-
-        if (idx == -1) {
-            // Palavra não encontrada, adicionar nova palavra ao array
-            array_palavras = (PalavraArray *)realloc(array_palavras, sizeof(PalavraArray) * (tamanho_array + 1));
-            idx = tamanho_array;
-            array_palavras[idx].palavra = strdup(palavras[i]);
-            array_palavras[idx].contagem = 1;
-            array_palavras[idx].quantidade_linhas = 1;
-            array_palavras[idx].linhas = (int *)malloc(sizeof(int));
-            array_palavras[idx].linhas_texto = (char **)malloc(sizeof(char *));
-            array_palavras[idx].linhas[0] = numero_linha;
-            array_palavras[idx].linhas_texto[0] = strdup(linha_texto);
-            tamanho_array++;
-        } else {
-            // Palavra já existe, atualizar a contagem e linhas
-            PalavraArray *p = &array_palavras[idx];
-
-            // Verificar se a palavra já foi registrada na linha (para evitar duplicação na mesma linha)
-            int ja_adicionada = 0;
-            for (int j = 0; j < p->quantidade_linhas; j++) {
-                if (p->linhas[j] == numero_linha) {
-                    ja_adicionada = 1;  // Palavra já foi adicionada nesta linha
-                    break;
-                }
-            }
-
-            if (!ja_adicionada) {
-                p->contagem++;
-                p->linhas = (int *)realloc(p->linhas, sizeof(int) * (p->quantidade_linhas + 1));
-                p->linhas[p->quantidade_linhas] = numero_linha;
-                p->quantidade_linhas++;
-                p->linhas_texto = (char **)realloc(p->linhas_texto, sizeof(char *) * (p->quantidade_linhas));
-                p->linhas_texto[p->quantidade_linhas - 1] = strdup(linha_texto);
-            }
-        }
+void inserir_array(char *palavra, int numero_linha, char *linha_texto, int quantidade) {
+    int idx = buscar_array(array_palavras, tamanho_array, palavra);
+    
+    if (idx == -1) {
+        // Palavra não encontrada, adicionar nova palavra ao array
+        array_palavras = (PalavraArray *)realloc(array_palavras, sizeof(PalavraArray) * (tamanho_array + 1));
+        idx = tamanho_array;
+        array_palavras[idx].palavra = strdup(palavra);
+        array_palavras[idx].contagem = 1;
+        array_palavras[idx].quantidade_linhas = 1;
+        array_palavras[idx].linhas = (int *)malloc(sizeof(int));
+        array_palavras[idx].linhas_texto = (char **)malloc(sizeof(char *));
+        array_palavras[idx].linhas[0] = numero_linha;
+        array_palavras[idx].linhas_texto[0] = strdup(linha_texto);
+        tamanho_array++;
+    } else{
+        // Palavra já existe, atualizar a contagem e linhas
+        array_palavras[idx].contagem++;
+        array_palavras[idx].linhas = (int *)realloc(array_palavras[idx].linhas, sizeof(int) * (array_palavras[idx].quantidade_linhas + 1));
+        array_palavras[idx].linhas[array_palavras[idx].quantidade_linhas] = numero_linha;
+        array_palavras[idx].quantidade_linhas++;
+        array_palavras[idx].linhas_texto = (char **)realloc(array_palavras[idx].linhas_texto, sizeof(char *) * (array_palavras[idx].quantidade_linhas));
+        array_palavras[idx].linhas_texto[array_palavras[idx].quantidade_linhas - 1] = strdup(linha_texto);
+            
     }
+
 }
 
 // Estrutura para armazenar palavras e suas ocorrências na árvore AVL
@@ -270,7 +257,7 @@ void preprocessar_texto_e_inserir(char *linha, int numero_linha, NoAVL **arvore_
         for (int i = 0; i < quantidade_palavras_linha; i++) {
             // Preprocessar palavra para inserção
             preprocessar_texto(palavras_linha[i]);
-            inserir_array(palavras_linha, numero_linha, linha_texto);
+            inserir_array(palavras_linha[i], numero_linha, linha_texto, quantidade_palavras_linha);
         }
     }
     
@@ -312,8 +299,8 @@ int main(int argc, char *argv[]) {
     // Processar o arquivo linha por linha
     while (fgets(linha, tamanho_maximo_linha, entrada)) {
         numero_linha++;
-        if(strcmp(argv[2], "avl") == 0)preprocessar_texto_e_inserir(linha, numero_linha, &arvore_avl, false);
-        else if(strcmp(argv[2], "array") == 0)preprocessar_texto_e_inserir(linha, numero_linha, &arvore_avl, true);
+        if(strcmp(argv[2], "arvore") == 0)preprocessar_texto_e_inserir(linha, numero_linha, &arvore_avl, false);
+        else if(strcmp(argv[2], "lista") == 0)preprocessar_texto_e_inserir(linha, numero_linha, &arvore_avl, true);
     }
 
     // Fim do tempo de carga
@@ -340,7 +327,7 @@ int main(int argc, char *argv[]) {
 
 
         // Buscar palavra no método escolhido
-        if (strcmp(argv[2], "avl") == 0) {
+        if (strcmp(argv[2], "arvore") == 0) {
             NoAVL *resultado = buscar_avl(arvore_avl, palavra_busca);
             if (resultado != NULL) {
                 printf("Palavra: %s\n", resultado->palavra);
@@ -353,7 +340,7 @@ int main(int argc, char *argv[]) {
                 printf("Palavra não encontrada.\n");
             }
 
-        } else if (strcmp(argv[2], "array") == 0) {
+        } else if (strcmp(argv[2], "lista") == 0) {
             int idx = buscar_array(array_palavras, tamanho_array, palavra_busca);
             if (idx != -1) {
                 // Palavra encontrada no array
