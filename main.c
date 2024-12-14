@@ -9,18 +9,19 @@
 #define TAMANHO 10000
 
 int numero_total_palavras;
+int quantidade = 0;
 
 // Estrutura para o Array de Palavras
 typedef struct PalavraArray {
-    char *palavra;
-    int contagem;
-    int *linhas;
-    char **linhas_texto;
-    int quantidade_linhas;
+    char *palavra; //Armazena a palavra
+    int contagem;   //Armazena a quantidade de vezes que a palavra apareceu
+    int *linhas;    //Armazena o número da linha em que a palavra apareceu
+    char **linhas_texto;    //Armazena a linha inteira onde a palavra apareceu
+    int quantidade_linhas;  //Armazena a quantidade total de linhas que a palavra apareceu
 } PalavraArray;
 
 PalavraArray* array_palavras = NULL;
-int tamanho_array = 0;
+int tamanho_array = 0;//Note que o total de palavras indexadas no array também será o tamanho dele.
 
 int buscar_array(PalavraArray *array, int tamanho, char *palavra) {
     for (int i = 0; i < tamanho; i++) {
@@ -37,7 +38,7 @@ void inserir_array(char *palavra, int numero_linha, char *linha_texto, int quant
     if (idx == -1) {
         // Palavra não encontrada, adicionar nova palavra ao array
         array_palavras = (PalavraArray *)realloc(array_palavras, sizeof(PalavraArray) * (tamanho_array + 1));
-        idx = tamanho_array;
+        idx = tamanho_array; //Novas palavras são inseridas no final do array
         array_palavras[idx].palavra = strdup(palavra);
         array_palavras[idx].contagem = 1;
         array_palavras[idx].quantidade_linhas = 1;
@@ -49,11 +50,14 @@ void inserir_array(char *palavra, int numero_linha, char *linha_texto, int quant
     } else{
         // Palavra já existe, atualizar a contagem e linhas
         array_palavras[idx].contagem++;
-        array_palavras[idx].linhas = (int *)realloc(array_palavras[idx].linhas, sizeof(int) * (array_palavras[idx].quantidade_linhas + 1));
-        array_palavras[idx].linhas[array_palavras[idx].quantidade_linhas] = numero_linha;
-        array_palavras[idx].quantidade_linhas++;
-        array_palavras[idx].linhas_texto = (char **)realloc(array_palavras[idx].linhas_texto, sizeof(char *) * (array_palavras[idx].quantidade_linhas));
-        array_palavras[idx].linhas_texto[array_palavras[idx].quantidade_linhas - 1] = strdup(linha_texto);
+        //Verifica se a palavra está na mesma linha. Como o sistema percorre linha a linha, desde da primeira até a última, podemos verificar apenas a última linha em que a palavra surgiu
+        if(array_palavras[idx].linhas[array_palavras[idx].quantidade_linhas-1]!=numero_linha){
+            array_palavras[idx].linhas = (int *)realloc(array_palavras[idx].linhas, sizeof(int) * (array_palavras[idx].quantidade_linhas + 1));
+            array_palavras[idx].linhas[array_palavras[idx].quantidade_linhas] = numero_linha;
+            array_palavras[idx].quantidade_linhas++;
+            array_palavras[idx].linhas_texto = (char **)realloc(array_palavras[idx].linhas_texto, sizeof(char *) * (array_palavras[idx].quantidade_linhas));
+            array_palavras[idx].linhas_texto[array_palavras[idx].quantidade_linhas - 1] = strdup(linha_texto);
+        } 
             
     }
 
@@ -71,8 +75,6 @@ typedef struct NoAVL {
     int altura; // Altura do nó
     struct NoAVL *esquerda, *direita;
 } NoAVL;
-
-// Funções auxiliares para a árvore AVL
 
 // Função para obter a altura de um nó
 int altura(NoAVL *no) {
@@ -172,15 +174,18 @@ NoAVL* inserir_avl(NoAVL *no, char *palavra, int numero_linha, char *linha_texto
     } else if (strcmp(palavra, no->palavra) > 0) {
         no->direita = inserir_avl(no->direita, palavra, numero_linha, linha_texto, palavras_linha, quantidade_palavras_linha);
     } else {
-        // Se a palavra já existe, aumentar o contador e adicionar a linha
         no->contagem++;
-        no->linhas = (int *)realloc(no->linhas, sizeof(int) * (no->quantidade_linhas + 1));
-        no->linhas[no->quantidade_linhas] = numero_linha;
-        no->quantidade_linhas++;
+        //Verifica se a palavra está na mesma linha. Como o sistema percorre linha a linha, desde da primeira até a última, podemos verificar apenas a última linha em que a palavra surgiu
+        if(*(no->linhas)!=numero_linha){
+            // Se a palavra já existe, aumentar o contador e adicionar a linha
+            no->linhas = (int *)realloc(no->linhas, sizeof(int) * (no->quantidade_linhas + 1));
+            no->linhas[no->quantidade_linhas] = numero_linha;
+            no->quantidade_linhas++;
 
-        // Adicionar a linha de texto
-        no->linhas_texto = (char **)realloc(no->linhas_texto, sizeof(char *) * (no->quantidade_linhas));
-        no->linhas_texto[no->quantidade_linhas - 1] = strdup(linha_texto);
+            // Adicionar a linha de texto
+            no->linhas_texto = (char **)realloc(no->linhas_texto, sizeof(char *) * (no->quantidade_linhas));
+            no->linhas_texto[no->quantidade_linhas - 1] = strdup(linha_texto);
+        }
         return no;
     }
 
@@ -272,6 +277,18 @@ void preprocessar_texto_e_inserir(char *linha, int numero_linha, NoAVL **arvore_
     free(palavras_linha);
 }
 
+//Função para determinar o total de nós da árvore
+int no_arvore(NoAVL* no){
+
+    if(no!=NULL){
+        no_arvore(no->esquerda);
+        quantidade++;
+        no_arvore(no->direita);
+    }
+    return 0;
+
+}
+
 // Função principal
 int main(int argc, char *argv[]) {
     FILE *entrada;
@@ -321,11 +338,16 @@ int main(int argc, char *argv[]) {
     fclose(entrada);
 
     //Informações iniciais na tela
-    printf("Arquivo: %s\n", nome_arquivo_txt);
-    printf("Tipo de indice: %s\n", tipo_de_busca);
+    printf("Arquivo: '%s'\n", nome_arquivo_txt);
+    printf("Tipo de indice: '%s'\n", tipo_de_busca);
     printf("Numero de linhas no arquivo: %d\n", numero_linha);
-    printf("Total de palavras indexadas: \n");
-    if(strcmp(argv[2], "arvore") == 0) printf("Altura da arvore: \n");
+    printf("Total de palavras indexadas: ");
+    if(strcmp(argv[2], "lista") == 0) printf("%d \n", tamanho_array);
+    if(strcmp(argv[2], "arvore") == 0){
+        no_arvore(arvore_avl);
+        printf("%d \n", quantidade);
+        printf("Altura da arvore: %d\n", altura(arvore_avl));
+    } 
     printf("Tempo de carga do arquivo e construcao do indice: %.2f ms\n", tempo_carga);
 
     // Menu de busca
@@ -339,33 +361,30 @@ int main(int argc, char *argv[]) {
         palavra_busca[strcspn(palavra_busca, "\n")] = '\0';  // Remover o '\n' no final
         sscanf(palavra_busca, "%s %s", palavra_busca1, palavra_busca2);
 
+        //Verifica se o usuario quer sair antes de analisar o arquivo
         if (strcmp(palavra_busca1, "fim") == 0) {
             break;
         }
 
-        preprocessar_texto(palavra_busca2);
-
-
-        // Buscar palavra no método escolhido
+        // Verifica se o comando esta correto e, em caso positivo, procura a palavra de acordo com o metodo escolhido
         if (strcmp(palavra_busca1, "busca") != 0)
         {
             printf("Opcao invalida!\n");
         }else if (strcmp(palavra_busca1, "busca") == 0)
         {
+            preprocessar_texto(palavra_busca2);
             if (strcmp(argv[2], "arvore") == 0) {
                 //Inicio do tempo de busca
                 inicio_busca=clock();
 
                 NoAVL *resultado = buscar_avl(arvore_avl, palavra_busca2);
                 if (resultado != NULL) {
-                    printf("Palavra: %s\n", resultado->palavra);
-                    printf("Ocorrências: %d\n", resultado->contagem);
-                    printf("Linhas onde aparece:\n");
+                    printf("Existem %d ocorrências da palavra '%s' na(s) seguinte(s) linha(s):\n", resultado->contagem, resultado->palavra);
                     for (int i = 0; i < resultado->quantidade_linhas; i++) {
-                        printf("Linha %d: %s", resultado->linhas[i], resultado->linhas_texto[i]);
+                        printf("%05d: %s", resultado->linhas[i], resultado->linhas_texto[i]);
                     }
                 } else {
-                    printf("Palavra não encontrada.\n");
+                    printf("Palavra '%s' não encontrada.\n", palavra_busca2);
                 }
 
                 //Fim do tempo de busca
@@ -374,7 +393,7 @@ int main(int argc, char *argv[]) {
 
                 printf("Tempo de busca: %.2f ms\n", tempo_busca);
 
-            } else if ((strcmp(argv[2], "lista") == 0)&&(strcmp(palavra_busca1, "busca") == 0)) {
+            } else if (strcmp(argv[2], "lista") == 0) {
 
                 //Inicio do tempo de busca
                 inicio_busca=clock();
@@ -382,14 +401,12 @@ int main(int argc, char *argv[]) {
                 int idx = buscar_array(array_palavras, tamanho_array, palavra_busca2);
                 if (idx != -1) {
                     // Palavra encontrada no array
-                    printf("Palavra: %s\n", array_palavras[idx].palavra);
-                    printf("Ocorrências: %d\n", array_palavras[idx].contagem);
-                    printf("Linhas onde aparece:\n");
+                    printf("Existem %d ocorrências da palavra '%s' na(s) seguinte(s) linha(s): \n", array_palavras[idx].contagem, array_palavras[idx].palavra);
                     for (int i = 0; i < array_palavras[idx].quantidade_linhas; i++) {
-                        printf("Linha %d: %s", array_palavras[idx].linhas[i], array_palavras[idx].linhas_texto[i]);
+                        printf("%05d: %s", array_palavras[idx].linhas[i], array_palavras[idx].linhas_texto[i]);
                     }
                 } else {
-                    printf("Palavra não encontrada.\n");
+                    printf("Palavra '%s' não encontrada.\n", palavra_busca2);
                 }
 
                 //Fim do tempo de busca
