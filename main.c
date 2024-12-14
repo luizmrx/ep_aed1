@@ -8,6 +8,8 @@
 
 #define TAMANHO 10000
 
+int numero_total_palavras;
+
 // Estrutura para o Array de Palavras
 typedef struct PalavraArray {
     char *palavra;
@@ -242,6 +244,7 @@ void preprocessar_texto_e_inserir(char *linha, int numero_linha, NoAVL **arvore_
     while (palavra != NULL) {
         palavras_linha[quantidade_palavras_linha] = strdup(palavra);
         quantidade_palavras_linha++;
+        numero_total_palavras++;
         palavra = strtok(NULL, " \n");
     }
 
@@ -276,8 +279,11 @@ int main(int argc, char *argv[]) {
     int numero_linha = 0;
     int tamanho_maximo_linha = TAMANHO;
     clock_t inicio, fim;
+    clock_t inicio_busca, fim_busca;
     double tempo_carga;
+    double tempo_busca;
     NoAVL *arvore_avl = NULL;
+    numero_total_palavras=0;
 
     // Verificar número de argumentos
     if (argc < 3) {
@@ -289,6 +295,11 @@ int main(int argc, char *argv[]) {
         printf("Erro ao abrir o arquivo.\n");
         return 1;
     }
+
+    //Captura o nome do arquivo txt
+    char* nome_arquivo_txt = argv[1];
+    //Captura a escolha de busca
+    char* tipo_de_busca = argv[2];
 
     // Aloca memória para a linha
     linha = (char *)malloc(tamanho_maximo_linha * sizeof(char));
@@ -309,51 +320,88 @@ int main(int argc, char *argv[]) {
 
     fclose(entrada);
 
-    // Exibir as informações da árvore AVL
-    printf("Tempo de carga: %.2f ms\n", tempo_carga);
+    //Informações iniciais na tela
+    printf("Arquivo: %s\n", nome_arquivo_txt);
+    printf("Tipo de indice: %s\n", tipo_de_busca);
+    printf("Numero de linhas no arquivo: %d\n", numero_linha);
+    printf("Total de palavras indexadas: \n");
+    if(strcmp(argv[2], "arvore") == 0) printf("Altura da arvore: \n");
+    printf("Tempo de carga do arquivo e construcao do indice: %.2f ms\n", tempo_carga);
 
     // Menu de busca
     char palavra_busca[100];
+    char palavra_busca1[50];
+    char palavra_busca2[50];
     while (1) {
-        printf("\nDigite uma palavra para buscar (ou 'sair' para encerrar): ");
+        
+        printf("\n> ");
         fgets(palavra_busca, sizeof(palavra_busca), stdin);
         palavra_busca[strcspn(palavra_busca, "\n")] = '\0';  // Remover o '\n' no final
+        sscanf(palavra_busca, "%s %s", palavra_busca1, palavra_busca2);
 
-        if (strcmp(palavra_busca, "sair") == 0) {
+        if (strcmp(palavra_busca1, "fim") == 0) {
             break;
         }
 
-        preprocessar_texto(palavra_busca);
+        preprocessar_texto(palavra_busca2);
 
 
         // Buscar palavra no método escolhido
-        if (strcmp(argv[2], "arvore") == 0) {
-            NoAVL *resultado = buscar_avl(arvore_avl, palavra_busca);
-            if (resultado != NULL) {
-                printf("Palavra: %s\n", resultado->palavra);
-                printf("Ocorrências: %d\n", resultado->contagem);
-                printf("Linhas onde aparece:\n");
-                for (int i = 0; i < resultado->quantidade_linhas; i++) {
-                    printf("Linha %d: %s", resultado->linhas[i], resultado->linhas_texto[i]);
-                }
-            } else {
-                printf("Palavra não encontrada.\n");
-            }
+        if (strcmp(palavra_busca1, "busca") != 0)
+        {
+            printf("Opcao invalida!\n");
+        }else if (strcmp(palavra_busca1, "busca") == 0)
+        {
+            if (strcmp(argv[2], "arvore") == 0) {
+                //Inicio do tempo de busca
+                inicio_busca=clock();
 
-        } else if (strcmp(argv[2], "lista") == 0) {
-            int idx = buscar_array(array_palavras, tamanho_array, palavra_busca);
-            if (idx != -1) {
-                // Palavra encontrada no array
-                printf("Palavra: %s\n", array_palavras[idx].palavra);
-                printf("Ocorrências: %d\n", array_palavras[idx].contagem);
-                printf("Linhas onde aparece:\n");
-                for (int i = 0; i < array_palavras[idx].quantidade_linhas; i++) {
-                    printf("Linha %d: %s", array_palavras[idx].linhas[i], array_palavras[idx].linhas_texto[i]);
+                NoAVL *resultado = buscar_avl(arvore_avl, palavra_busca2);
+                if (resultado != NULL) {
+                    printf("Palavra: %s\n", resultado->palavra);
+                    printf("Ocorrências: %d\n", resultado->contagem);
+                    printf("Linhas onde aparece:\n");
+                    for (int i = 0; i < resultado->quantidade_linhas; i++) {
+                        printf("Linha %d: %s", resultado->linhas[i], resultado->linhas_texto[i]);
+                    }
+                } else {
+                    printf("Palavra não encontrada.\n");
                 }
-            } else {
-                printf("Palavra não encontrada.\n");
+
+                //Fim do tempo de busca
+                fim_busca=clock();
+                tempo_busca = ((double)(fim_busca - inicio_busca)) / CLOCKS_PER_SEC * 1000;  // Tempo em milissegundos
+
+                printf("Tempo de busca: %.2f ms\n", tempo_busca);
+
+            } else if ((strcmp(argv[2], "lista") == 0)&&(strcmp(palavra_busca1, "busca") == 0)) {
+
+                //Inicio do tempo de busca
+                inicio_busca=clock();
+
+                int idx = buscar_array(array_palavras, tamanho_array, palavra_busca2);
+                if (idx != -1) {
+                    // Palavra encontrada no array
+                    printf("Palavra: %s\n", array_palavras[idx].palavra);
+                    printf("Ocorrências: %d\n", array_palavras[idx].contagem);
+                    printf("Linhas onde aparece:\n");
+                    for (int i = 0; i < array_palavras[idx].quantidade_linhas; i++) {
+                        printf("Linha %d: %s", array_palavras[idx].linhas[i], array_palavras[idx].linhas_texto[i]);
+                    }
+                } else {
+                    printf("Palavra não encontrada.\n");
+                }
+
+                //Fim do tempo de busca
+                fim_busca=clock();
+                tempo_busca = ((double)(fim_busca - inicio_busca)) / CLOCKS_PER_SEC * 1000;  // Tempo em milissegundos
+
+                printf("Tempo de busca: %.2f ms\n", tempo_busca);
             }
         }
+        
+        
+        
     }
 
     return 0;
