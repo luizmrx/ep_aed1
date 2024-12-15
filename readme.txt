@@ -1,4 +1,4 @@
-Esse projeto foi desenvolvido utilizando o sistema operacional Linux, distro Mint. Para o funcionamento adequado do programa, foi necessário instalar a biblioteca unac e a biblioteca uft8proc. Para fazer a instalação dessas bibliotecas, digite os seguintes comandos no terminal:
+Esse projeto foi desenvolvido utilizando o sistema operacional Linux, distro Mint. Para o funcionamento adequado do programa, foi necessário instalar as bibliotecas unac e uft8proc. Para fazer a instalação dessas bibliotecas, digite os seguintes comandos no terminal:
 
 sudo apt-get install libunac1-dev
 sudo apt-get install libutf8proc-dev

@@ -216,7 +216,7 @@ void preprocessar_texto(char *texto) {
     char *p = texto;
     while (*p) {
         if (ispunct(*p)) {
-            *p = '\0'; // Substitui pontuação por espaço
+            *p = ' '; 
         } else {
             *p = tolower(*p); // Converte para minúscula
         }
@@ -245,12 +245,13 @@ void preprocessar_texto_e_inserir(char *linha, int numero_linha, NoAVL **arvore_
     char *linha_texto = strdup(linha);
 
     // Tokenização da linha em palavras
-    palavra = strtok(linha, "- \n");
+    preprocessar_texto(linha);
+    palavra = strtok(linha, " \0");
     while (palavra != NULL) {
         palavras_linha[quantidade_palavras_linha] = strdup(palavra);
         quantidade_palavras_linha++;
         numero_total_palavras++;
-        palavra = strtok(NULL, "- \n");
+        palavra = strtok(NULL, " \0");
     }
 
     if(!array){
@@ -314,7 +315,7 @@ int main(int argc, char *argv[]) {
 
     // Verificar número de argumentos
     if (argc < 3) {
-        printf("Uso: %s <arquivo.txt> <avl|array>\n", argv[0]);
+        printf("Erro!!! A entrada deve ser composta por: ./main <arquivo.txt> <arvore|lista>\n");
         return 1;
     }
     entrada = fopen(argv[1], "r");
@@ -327,6 +328,12 @@ int main(int argc, char *argv[]) {
     char* nome_arquivo_txt = argv[1];
     //Captura a escolha de busca
     char* tipo_de_busca = argv[2];
+
+    //Verifica que a escolha de busca é uma das opções válidas
+    if ((strcmp(argv[2], "arvore") != 0)&&(strcmp(argv[2], "lista") != 0)){
+        printf("Busca incorreta. Escolha entre arvore ou lista.\n");
+        return 1;
+    }
 
     // Aloca memória para a linha
     linha = (char *)malloc(tamanho_maximo_linha * sizeof(char));
