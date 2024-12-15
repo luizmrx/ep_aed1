@@ -216,13 +216,32 @@ NoAVL* buscar_avl(NoAVL *no, char *palavra) {
 void preprocessar_texto(char *texto) {
     char *p = texto;
     while (*p) {
-        if (ispunct(*p)) {
+        // Substituir o apóstrofo por um espaço
+        if (*p == '\'') {
+            *p = ' ';
+        }
+        // Substitui a pontuação por um espaço
+        else if (ispunct(*p)) {
             *p = ' '; 
-        } else {
-            *p = tolower(*p); // Converte para minúscula
+        } 
+        // Converte caracteres para minúscula
+        else {
+            *p = tolower(*p);
         }
         p++;
     }
+
+    int i = 0, j = 0;
+    
+    while (texto[i] != '\0') {
+        // Verifica se o caractere é alfanumérico (letra ou número)
+        if (isalnum(texto[i])) {
+            texto[j++] = texto[i];  // Mantém o caractere alfanumérico
+        }
+        i++;
+    }
+    
+    texto[j] = '\0';  // Adiciona o terminador de string ao final
 
     // Usar unac_string para remover os acentos
     char *texto_sem_acento = NULL;
