@@ -216,7 +216,7 @@ void preprocessar_texto(char *texto) {
     char *p = texto;
     while (*p) {
         if (ispunct(*p)) {
-            *p = ' '; // Substitui pontuação por espaço
+            *p = '\0'; // Substitui pontuação por espaço
         } else {
             *p = tolower(*p); // Converte para minúscula
         }
@@ -245,12 +245,12 @@ void preprocessar_texto_e_inserir(char *linha, int numero_linha, NoAVL **arvore_
     char *linha_texto = strdup(linha);
 
     // Tokenização da linha em palavras
-    palavra = strtok(linha, " \n");
+    palavra = strtok(linha, "- \n");
     while (palavra != NULL) {
         palavras_linha[quantidade_palavras_linha] = strdup(palavra);
         quantidade_palavras_linha++;
         numero_total_palavras++;
-        palavra = strtok(NULL, " \n");
+        palavra = strtok(NULL, "- \n");
     }
 
     if(!array){
@@ -287,6 +287,16 @@ int no_arvore(NoAVL* no){
     }
     return 0;
 
+}
+
+int visualizar_arvore(NoAVL* no){
+
+    if(no!=NULL){
+        visualizar_arvore(no->esquerda);
+        printf("%s\n", no->palavra);
+        visualizar_arvore(no->direita);
+    }
+    return 0;
 }
 
 // Função principal
@@ -383,6 +393,10 @@ int main(int argc, char *argv[]) {
                     for (int i = 0; i < resultado->quantidade_linhas; i++) {
                         printf("%05d: %s", resultado->linhas[i], resultado->linhas_texto[i]);
                     }
+                    //Função utilizada para vericar todos os nós da árvore de maneira ordenada. Caso queira visualizá-la, apenas descomente a seguinte função.
+                    //visualizar_arvore(arvore_avl);
+                    
+
                 } else {
                     printf("Palavra '%s' não encontrada.\n", palavra_busca2);
                 }
@@ -405,6 +419,15 @@ int main(int argc, char *argv[]) {
                     for (int i = 0; i < array_palavras[idx].quantidade_linhas; i++) {
                         printf("%05d: %s", array_palavras[idx].linhas[i], array_palavras[idx].linhas_texto[i]);
                     }
+
+                    //Usamos essa parte para verificar a formação do array completo. Caso também queira ver como o array está organizado, descomente essa parte do código e faça uma busca de uma palavra que está presente no array.
+                    /*
+                    for (int i = 0; i < tamanho_array; i++)
+                    {
+                        printf("%s\n", array_palavras[i].palavra);
+                    }
+                    */
+                    
                 } else {
                     printf("Palavra '%s' não encontrada.\n", palavra_busca2);
                 }
