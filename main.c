@@ -176,7 +176,8 @@ NoAVL* inserir_avl(NoAVL *no, char *palavra, int numero_linha, char *linha_texto
     } else {
         no->contagem++;
         //Verifica se a palavra está na mesma linha. Como o sistema percorre linha a linha, desde da primeira até a última, podemos verificar apenas a última linha em que a palavra surgiu
-        if(*(no->linhas)!=numero_linha){
+        if((no->linhas[no->quantidade_linhas-1])!=numero_linha){
+            //printf("%d %d\n", *no->linhas, numero_linha);
             // Se a palavra já existe, aumentar o contador e adicionar a linha
             no->linhas = (int *)realloc(no->linhas, sizeof(int) * (no->quantidade_linhas + 1));
             no->linhas[no->quantidade_linhas] = numero_linha;
@@ -412,7 +413,7 @@ int main(int argc, char *argv[]) {
                 fim_busca=clock();
                 tempo_busca = ((double)(fim_busca - inicio_busca)) / CLOCKS_PER_SEC * 1000;  // Tempo em milissegundos
 
-                printf("Tempo de busca: %.2f ms\n", tempo_busca);
+                printf("\nTempo de busca: %.2f ms\n", tempo_busca);
 
             } else if (strcmp(argv[2], "lista") == 0) {
 
@@ -443,7 +444,7 @@ int main(int argc, char *argv[]) {
                 fim_busca=clock();
                 tempo_busca = ((double)(fim_busca - inicio_busca)) / CLOCKS_PER_SEC * 1000;  // Tempo em milissegundos
 
-                printf("Tempo de busca: %.2f ms\n", tempo_busca);
+                printf("\nTempo de busca: %.2f ms\n", tempo_busca);
             }
         }
         
